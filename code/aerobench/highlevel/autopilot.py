@@ -32,6 +32,11 @@ class Autopilot(Freezable):
         
         self.mode = init_mode # discrete state, this should be overwritten by subclasses
 
+        # these get checked with asserts in der_func
+        self.ALPHA_LIMITS =(-2, 2)
+        self.VEL_LIMITS = (200, 3000)
+        self.ALT_LIMITS = (-10000, 100000)
+
         self.freeze_attrs()
 
     def advance_discrete_mode(self, t, x_f16):

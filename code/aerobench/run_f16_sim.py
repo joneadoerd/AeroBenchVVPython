@@ -281,6 +281,10 @@ def make_der_func(ap, model_str, v2_integrators):
     def der_func(t, full_state):
         'derivative function, generalized for multiple aircraft'
 
+        ALPHA_LIMITS = ap.ALPHA_LIMITS # (-2, 2)
+        VEL_LIMITS = ap.VEL_LIMITS # (200, 3000)
+        ALT_LIMITS = ap.ALT_LIMITS # (-10000, 100000)
+
         u_refs = ap.get_checked_u_ref(t, full_state)
 
         num_aircraft = u_refs.size // 4
@@ -295,17 +299,17 @@ def make_der_func(ap, model_str, v2_integrators):
             #print(f".called der_func(aircraft={i}, t={t}, state={full_state}")
 
             alpha = state[StateIndex.ALPHA]
-            if not -2 < alpha < 2:
-                raise SimModelError(f"alpha ({alpha}) out of bounds")
+            if not ALPHA_LIMITS[0] < alpha < ALPHA_LIMITS[1]:
+                raise SimModelError(f"alpha ({alpha}) out of bounds: {ALPHA_LIMITS}")
 
             vel = state[StateIndex.VEL]
             # even going lower than 300 is probably not a good idea
-            if not 200 <= vel <= 3000:
-                raise SimModelError(f"velocity ({vel}) out of bounds")
+            if not VEL_LIMITS[0] < vel < VEL_LIMITS[1]:
+                raise SimModelError(f"velocity ({vel}) out of bounds: {VEL_LIMITS}")
 
             alt = state[StateIndex.ALT]
-            if not -10000 < alt < 100000:
-                raise SimModelError(f"altitude ({alt}) out of bounds")
+            if not ALT_LIMITS[0] < alt < ALT_LIMITS[1]:
+                raise SimModelError(f"altitude ({alt}) out of bounds: {ALT_LIMITS}")
 
             u_ref = u_refs[4*i:4*(i+1)]
 
