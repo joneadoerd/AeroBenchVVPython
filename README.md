@@ -1,4 +1,4 @@
-﻿<p align="center"> <img src="overhead_0.png" width="200"/> </p>
+﻿<p align="center"> <img src="overhead_0.png" width="500"/> </p>
 
 # AeroBenchVVPython (Safe RL)
 
