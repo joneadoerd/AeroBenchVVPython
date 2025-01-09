@@ -72,7 +72,7 @@ def set_axis_limits(ax, num_vars, states, zoom_factor=1.2):
         maxy = midy + dx/2
         dy = dx
 
-    print(f"zoom_factor: {zoom_factor}, x range before: {minx, maxx}")
+    #print(f"zoom_factor: {zoom_factor}, x range before: {minx, maxx}")
     # adjust zoom
     midx = (maxx + minx) / 2
     midy = (maxy + miny) / 2
@@ -83,7 +83,7 @@ def set_axis_limits(ax, num_vars, states, zoom_factor=1.2):
     miny = midy - zoom_factor * dy/2
     maxy = midy + zoom_factor * dy/2
 
-    print(f"x range after: {minx, maxx}")
+    #print(f"x range after: {minx, maxx}")
 
     # add buffer
     xs = [minx, maxx]

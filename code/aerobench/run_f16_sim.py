@@ -65,11 +65,13 @@ class F16SimState(Freezable):
         self.cur_sim_time = 0
         self.total_sim_time = 0
 
-        self.der_func = make_der_func(ap, model_str, v2_integrators)
+        self.der_func = make_der_func(self.ap, self.model_str, self.v2_integrators)
 
         if integrator_str == 'rk45':
             integrator_class = RK45
             self.integrator_kwargs = {}
+            #self.integrator_kwargs = {'rtol':1e-3, 'atol':1e-6}
+            #self.integrator_kwargs = {'rtol':1e-4, 'atol':1e-7}
         else:
             assert integrator_str == 'euler'
             integrator_class = Euler
@@ -130,8 +132,11 @@ class F16SimState(Freezable):
 
             if mode_changed:
                 # re-initialize the integration class on discrete mode switches
+                #print("----------")
                 self.integrator = self.integrator_class(self.der_func, self.times[-1], self.states[-1], np.inf, \
                                                         **self.integrator_kwargs)
+                
+                #print(f". reinitialized integrator with new mode. args: {self.der_func, self.times[-1], self.states[-1], np.inf, self.integrator_kwargs}")
 
         assert tmax >= self.cur_sim_time
         self.cur_sim_time = tmax
@@ -167,12 +172,14 @@ class F16SimState(Freezable):
                 break
 
             # goal for rest of the loop: do one more step
+            #print(f". next_step_time={next_step_time}, tmax={tmax}")
 
             while next_step_time >= self.integrator.t + tol:
                 # keep advancing integrator until it goes past the next step time
                 assert self.integrator.status == 'running'
                 
                 self.integrator.step()
+                #print(f". stepped integrator to time self.integrator.t={self.integrator.t}")
 
                 if self.integrator.status != 'running':
                     break
@@ -184,10 +191,13 @@ class F16SimState(Freezable):
             self.times.append(next_step_time)
 
             if abs(self.integrator.t - next_step_time) < tol:
-                self.states.append(self.integrator.x)
+                self.states.append(self.integrator.y)
+                #print(f". adding final state from integrator: {self.integrator.y}")
             else:
                 dense_output = self.integrator.dense_output()
                 self.states.append(dense_output(next_step_time))
+
+                #print(f". adding dense_output at time {next_step_time} since integrator.t={self.integrator.t}. dense time state: {dense_output(next_step_time)}")
 
             # re-run dynamics function at current state to get non-state variables
             if self.extended_states:
@@ -278,8 +288,26 @@ class SimModelError(RuntimeError):
 def make_der_func(ap, model_str, v2_integrators):
     'make the combined derivative function for integration'
 
+    first_full_state = None
+
     def der_func(t, full_state):
         'derivative function, generalized for multiple aircraft'
+
+        nonlocal first_full_state
+
+        if first_full_state is None:
+            first_full_state = full_state
+
+        if False:
+            print(f"\nStart Der func ({t}, {full_state})")
+
+            # print % difference between first and current state
+            for i in [0, 1, 4, 6, 13, 14, 15]:
+                if first_full_state[i] != 0:
+                    diff = (full_state[i] - first_full_state[i]) / first_full_state[i]
+                    print(f"state[{i}] diff: {diff*100:.3f}%", end=' ')
+
+            print()
 
         ALPHA_LIMITS = ap.ALPHA_LIMITS # (-2, 2)
         VEL_LIMITS = ap.VEL_LIMITS # (200, 3000)
@@ -317,6 +345,8 @@ def make_der_func(ap, model_str, v2_integrators):
             xds.append(xd)
 
         rv = np.hstack(xds)
+
+        #print(f"Der func ({t}, {model_str, v2_integrators}) returning {rv}")
 
         return rv
 

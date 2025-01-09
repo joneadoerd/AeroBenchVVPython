@@ -108,4 +108,6 @@ class LowLevelController(Freezable):
     def get_integrator_derivatives(self, t, x_f16, u_ref, Nz, ps, Ny_r):
         'get the derivatives of the integrators in the low-level controller'
 
-        return [Nz - u_ref[0], ps - u_ref[1], Ny_r - u_ref[2]]
+        rv = [Nz - u_ref[0], ps - u_ref[1], Ny_r - u_ref[2]]
+
+        return rv
