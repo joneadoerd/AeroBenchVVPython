@@ -11,6 +11,7 @@ from aerobench.visualize import plot
 from wingman_autopilot import WingmanAutopilot
 
 from scipy.optimize import linprog
+from scipy.io import savemat
 
 class DubinsPredictor:
     '''predictor using dubins car model'''
@@ -134,6 +135,7 @@ class RegressionPredictor:
         self.output_obs_func = output_obs_func
 
         self.A_dict = {}
+        self.residuals_dict = {}
 
     def fit(self, all_f16_res_dicts, num_steps):
         '''train a linear model and assign it to A_dict'''
@@ -165,6 +167,7 @@ class RegressionPredictor:
         print(f"{num_steps=}, {A.shape=}, {residuals=}")
  
         self.A_dict[num_steps] = A
+        self.residuals_dict[num_steps] = residuals
 
     def predict(self, res_dict, start_step, num_steps_to_predict):
         '''predict using the trained model'''
@@ -425,19 +428,27 @@ def eval_predictor_accuracy(all_f16_res_dicts, predictor, num_steps_to_predict):
 
     dubins = DubinsPredictor()
 
-    for traj_index in range(num_trajectories):
+    for traj_index in [0]: #range(num_trajectories):
         res_dict = all_f16_res_dicts[traj_index]
         num_traj_steps = len(res_dict['states'])
 
+        f16_states_13d = res_dict['states']
+        vel_targets = res_dict['vel_targets']
+        psi_targets = res_dict['psi_targets']
         f16_np_states, actions_rollout = extract_np_states_actions(res_dict)
 
+        # save the f16 states and actions to 'f16_traj.mat'
+        savemat(f'f16_traj{traj_index}.mat', {'states13d': f16_states_13d, 'states4d': f16_np_states, 'actions': actions_rollout,
+                                              'vel_targets': vel_targets, 'psi_targets': psi_targets})
+        print(f"Saved f16 states and actions to f16_traj{traj_index}.mat")
+       
         #f16_np_states = all_f16_trajs[traj_index]
         #actions_rollout = actions_np_list[traj_index]
 
         #assert len(f16_np_states) == actions_rollout.shape[1] + 1, f"expected same number of f16 trajs and actions, got {len(f16_np_states)} and {actions_rollout.shape[1]}"
 
         for start_step in range(num_traj_steps - (num_steps_to_predict + 1)):
-            #state0 = f16_np_states[start_step].copy()
+            
 
             #actions_rollout_trimmed = actions_rollout[:, start_step:start_step+(num_steps_to_predict)]
 
