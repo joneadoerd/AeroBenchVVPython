@@ -438,7 +438,8 @@ def eval_predictor_accuracy(all_f16_res_dicts, predictor, num_steps_to_predict):
         f16_np_states, actions_rollout = extract_np_states_actions(res_dict)
 
         # save the f16 states and actions to 'f16_traj.mat'
-        savemat(f'f16_traj{traj_index}.mat', {'states13d': f16_states_13d, 'states4d': f16_np_states, 'actions': actions_rollout,
+        f16_states16d = f16_states_13d.T
+        savemat(f'f16_traj{traj_index}.mat', {'states16d': f16_states16d, 'states4d': np.array(f16_np_states).T, 'actions': actions_rollout,
                                               'vel_targets': vel_targets, 'psi_targets': psi_targets})
         print(f"Saved f16 states and actions to f16_traj{traj_index}.mat")
        
