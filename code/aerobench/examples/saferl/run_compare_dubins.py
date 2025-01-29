@@ -23,7 +23,7 @@ def main():
     filename = 'linear_predictor.mat'
     data = {'max_steps': MAX_STEPS_TO_PREDICT}
 
-    for step in range(1, MAX_STEPS_TO_PREDICT):
+    for step in range(1, MAX_STEPS_TO_PREDICT+1):
         A = predictor.A_dict[step]
         residuals = predictor.residuals_dict[step]
         data[f'A_{step}'] = A
