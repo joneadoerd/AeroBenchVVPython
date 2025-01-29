@@ -200,7 +200,7 @@ def make_linear_predictor(all_f16_res_dicts, MAX_STEPS):
         heading = np.pi / 2 - f16_state_13d[StateIndex.PSI]
         vel = f16_state_13d[StateIndex.VT]
 
-        dubins_state = np.array([x, y, heading, vel, vel*np.sin(heading), vel*np.cos(heading)])
+        dubins_state = np.array([x, y, heading, vel, vel*np.cos(heading), vel*np.sin(heading)])
         list_of_arrays.append(dubins_state)
 
         # add f16 state
