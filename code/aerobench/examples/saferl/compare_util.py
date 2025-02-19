@@ -505,7 +505,7 @@ def plot_prediction_vs_dubins(all_f16_res_dicts, predictor, num_steps_to_predict
         ax = plot.plot_overhead(res_dict, figsize=(10, 8))
         plt.plot(res_dict['states'][:, StateIndex.POS_E], res_dict['states'][:, StateIndex.POS_N], 'k-', label='F16 recreation')
 
-        for start_step in range(num_traj_steps - (num_steps_to_predict + 1)):
+        for start_step in range(num_traj_steps - (num_steps_to_predict)):
 
             x = res_dict['states'][:, StateIndex.POS_E][start_step]
             y = res_dict['states'][:, StateIndex.POS_N][start_step]
@@ -522,7 +522,7 @@ def plot_prediction_vs_dubins(all_f16_res_dicts, predictor, num_steps_to_predict
 
             #actions_rollout_trimmed = actions_rollout[:, start_step:start_step+(num_steps_to_predict)]
 
-            for s in range(1, num_steps_to_predict):
+            for s in range(1, num_steps_to_predict+1):
                 predicted_state = predictor.predict(res_dict, start_step, s)
                 dubins_state = dubins.predict(res_dict, start_step, s)
 
