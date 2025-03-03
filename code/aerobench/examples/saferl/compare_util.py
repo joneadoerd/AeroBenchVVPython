@@ -357,17 +357,13 @@ class WingmanF16State:
         self.fss.simulate_to(self.tmax, update_mode_at_start=True) # TODO: check if we need to be increasing the time by 1.0 here
 
 @cachier(cache_dir='./cachier')
-def load_data_and_sim_f16(single_index=None):
+def load_data_and_sim_f16(dubins_file_path, pkl_hash, single_index=None):
     '''load dubins data from file and recreate using f16 sim'''
-
-    dubins_filename = "dubins_data.pkl"
-    script_dir = get_script_path(__file__)
-    dubins_file_path = os.path.join(script_dir, dubins_filename)
 
     with open(dubins_file_path, 'rb') as file:
         data = pickle.load(file)
         
-    print(f"Loaded data from {dubins_filename}")
+    print(f"Loaded data from {dubins_file_path}")
     states_np_list, actions_np_list = data
 
     if single_index is not None:
