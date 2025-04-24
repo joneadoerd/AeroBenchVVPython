@@ -5,7 +5,7 @@ from numpy import deg2rad
 import matplotlib.pyplot as plt
 
 from aerobench.run_f16_sim import run_f16_sim
-from aerobench.util import StateIndex
+from aerobench.util import StateIndex, get_state_names
 
 from aerobench.visualize import plot
 
@@ -72,8 +72,13 @@ def main():
     for key, value in data0.items():
         print(f"  {key}: {value}")
 
-    
     init = get_wingman_autopilot_init(init_x, init_y, np.pi/2 - init_heading, init_v)
+
+    print(f'\nF16 initial state:')
+    var_names = get_state_names()
+    for i, name in enumerate(var_names):
+        print(f'  {name}: {init[i]}')
+
     ap = WingmanAutopilot(target_heading=np.pi/2 - init_heading, target_vel=init_v, 
         target_alt=1000, stdout=True)
 
