@@ -14,6 +14,7 @@ class WingmanAutopilot(Autopilot):
     '''wingman follower autopilot'''
 
     def __init__(self, target_heading, target_vel=550, target_alt=3600, gain_str='old', stdout=False):
+
         self.stdout = stdout
         self.targets = [target_heading, target_vel, target_alt]
 
@@ -33,9 +34,9 @@ class WingmanAutopilot(Autopilot):
         self.cfg_k_der_psi = 0.5 # orig: 0.5
 
         # Gains for roll tracking
-        self.cfg_k_prop_phi = 0.5 # orig: 0.75
+        self.cfg_k_prop_phi = 1.5 # orig: 0.75
         self.cfg_k_der_phi = 0.5
-        self.cfg_max_bank_deg = 80 # maximum bank angle setpoint
+        self.cfg_max_bank_deg = 80 # orig:65 # maximum bank angle setpoint
         # v2 was 0.5, 0.9
 
         # Ranges for Nz
@@ -47,8 +48,6 @@ class WingmanAutopilot(Autopilot):
         llc = LowLevelController(gain_str=gain_str)
 
         Autopilot.__init__(self, 'Waypoint 1', llc=llc)
-
-        #self.VEL_LIMITS = (150, 3000)
 
     def log(self, s):
         'print to terminal if stdout is true'
@@ -142,12 +141,10 @@ class WingmanAutopilot(Autopilot):
     def track_airspeed(self, x_f16):
         'get throttle command'
 
-        vt_cmd = self.targets[1] 
+        vt_cmd = self.targets[1]
 
         # Proportional control on airspeed using throttle
         throttle = self.cfg_k_vt * (vt_cmd - x_f16[StateIndex.VT])
-
-        #print(f"vel: {x_f16[StateIndex.VT]}, cmd: {vt_cmd}, throttle: {throttle}")
 
         return throttle
 

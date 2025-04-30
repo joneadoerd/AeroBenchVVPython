@@ -4,7 +4,7 @@ import numpy as np
 from numpy import deg2rad
 import matplotlib.pyplot as plt
 
-from aerobench.run_f16_sim import run_f16_sim
+from aerobench.run_f16_sim import run_f16_sim, F16SimState
 from aerobench.util import StateIndex, get_state_names
 
 from aerobench.visualize import plot
@@ -55,20 +55,61 @@ def get_wingman_autopilot_init(x0=0, y0=0, heading0=np.pi/2, v0=550):
     init = [vt, alpha, beta, phi, theta, psi, 0, 0, 0, y0, x0, alt, power]
     return init
 
+def my_run_f16_sim(initial_state, tmax, ap, step=1/30, extended_states=False,
+                integrator_str='rk45', v2_integrators=False, print_errors=True,
+                custom_stop_func=None):
+    '''custom version of run_f16_sim with higher accuracy
+    '''
+
+    fss = F16SimState(initial_state, ap, step, extended_states,
+                integrator_str, v2_integrators, print_errors, custom_stop_func=custom_stop_func)
+    
+    fss.integrator_kwargs = {'rtol': 1e-5, 'atol': 1e-08}
+
+    fss.simulate_to(tmax, update_mode_at_start=True)
+
+    # extract states
+
+    res = {}
+    res['status'] = fss.integrator.status
+    res['times'] = fss.times
+    res['states'] = np.array(fss.states, dtype=float)
+    res['modes'] = fss.modes
+
+    if extended_states:
+        res['xd_list'] = fss.xd_list
+        res['ps_list'] = fss.ps_list
+        res['Nz_list'] = fss.Nz_list
+        res['Ny_r_list'] = fss.Ny_r_list
+        res['u_list'] = fss.u_list
+
+    res['runtime'] = fss.total_sim_time
+
+    return res
+
 def main():
     'main function'
 
     csvdata = load_csv()
 
-    init_x = csvdata[(0, 'lead')]['x']
-    init_y = csvdata[(0, 'lead')]['y']
-    init_heading = csvdata[(0, 'lead')]['heading']
-    init_v = csvdata[(0, 'lead')]['v']
+    aircraft_str = 'lead'
+
+    init_x = csvdata[(0, aircraft_str)]['x']
+    init_y = csvdata[(0, aircraft_str)]['y']
+    init_heading = csvdata[(0, aircraft_str)]['heading']
+    init_v = csvdata[(0, aircraft_str)]['v']
+
+    init_u0 = csvdata[(0, aircraft_str)]['control[0]']
+    init_u1 = csvdata[(0, aircraft_str)]['control[1]']
+
+    print(f"Initial state of {aircraft_str} at step 0 in csv:")
+    print(f"  x: {init_x}, y: {init_y}, heading: {init_heading}, v: {init_v}")
+    print(f"  u0: {init_u0}, u1: {init_u1}\n")
 
     #print(f"init_x: {init_x}, init_y: {init_y}, init_heading: {init_heading}, init_v: {init_v}")
     # print all lead state 0 values
-    print("Lead State at step 0 in csv:")
-    data0 = csvdata[(0, 'lead')]
+    print(f"State of {aircraft_str} at step 0 in csv:")
+    data0 = csvdata[(0, aircraft_str)]
     for key, value in data0.items():
         print(f"  {key}: {value}")
 
@@ -81,12 +122,37 @@ def main():
 
     ap = WingmanAutopilot(target_heading=np.pi/2 - init_heading, target_vel=init_v, 
         target_alt=1000, stdout=True)
+    
+
+    ##################################
+    ### update control
+    control = (init_u0, init_u1)
+    
+    V_MAX = 900
+    V_MIN = 700
+
+    ap.targets[0] -= control[0] # modify target heading by rudder control input
+    # modify target velocity by throttle control input
+    k_v = 1.0 # need to be tuned
+    if ap.targets[1] + control[1]*k_v < V_MIN:
+        ap.targets[1] = V_MIN
+    elif ap.targets[1] + control[1]*k_v > V_MAX:
+        ap.targets[1] = V_MAX
+    else:
+        ap.targets[1] += control[1]*k_v
+
+    print("ap targests after setting control:")
+    print(f"  target_heading: {ap.targets[0]}")
+    print(f"  target_vel: {ap.targets[1]}")
+
+    ##################################
 
     tmax = 1 # simulation time
+    #tmax = 132 # simulation time
 
-    step = 1/30
+    step = 1.0 #1/30
     extended_states = False
-    res = run_f16_sim(init, tmax, ap, step=step, extended_states=extended_states, integrator_str='rk45')
+    res = my_run_f16_sim(init, tmax, ap, step=step, extended_states=extended_states, integrator_str='rk45')
     #print(f"res.keys(): {res.keys()}")
     # print(f"res['states']: {res['states']}")
     # print(f"res['states'].shape: {res['states'].shape}")
@@ -111,10 +177,10 @@ def main():
     print(f"Made {filename}")
 
     # get state at step 1 from csv file
-    x1 = csvdata[(1, 'lead')]['x']
-    y1 = csvdata[(1, 'lead')]['y']
-    heading1 = csvdata[(1, 'lead')]['heading']
-    v1 = csvdata[(1, 'lead')]['v']
+    x1 = csvdata[(1, aircraft_str)]['x']
+    y1 = csvdata[(1, aircraft_str)]['y']
+    heading1 = csvdata[(1, aircraft_str)]['heading']
+    v1 = csvdata[(1, aircraft_str)]['v']
     print(f"In CSV file at step 1: x: {x1}, y: {y1}, heading: {heading1}, v: {v1}")
 
     # get state at step 1 from simulation
