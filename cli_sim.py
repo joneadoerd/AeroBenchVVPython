@@ -1,9 +1,11 @@
 import sys
 import json
+import argparse
 from typing import List, Dict, Any
 
 from aerobench.examples.waypoint.waypoint_autopilot import WaypointAutopilot
 from aerobench.run_f16_sim import run_f16_sim
+from aerobench.util import convert_result_ft_to_meter
 
 # Data structures matching the Rust structs
 class F16State:
@@ -77,7 +79,7 @@ class Simulation:
             ]
             res = run_f16_sim(init, tmax, ap, step=step,
                             extended_states=True, integrator_str='rk45')
-            print(f"Keys in result for Aircraft {target['id']}: {list(res.keys())}")
+            # print(f"Keys in result for Aircraft {target['id']}: {list(res.keys())}")
             # Build SimulationResult
             # Convert all states to F16State (only first 13 elements of each state), and attach time
             final_states = [F16State(*s[:13], time=t) for s, t in zip(res['states'], res['times'])] if 'states' in res else []
@@ -128,10 +130,12 @@ class SimulationResultList:
         }
    
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--unit', choices=['meter', 'feet'], default='feet', help='Output unit for state data')
+    args = parser.parse_args()
     # Read JSON input from stdin
     input_json = sys.stdin.read()
     sim_data = json.loads(input_json)
-    # print(f"Simulation data: {sim_data}")
     # Parse input into objects
     sim = Simulation(
         [Target(t['id'], F16State(**t['init_state']), [Position(**wp) for wp in t['waypoints']]) for t in sim_data['targets']],
@@ -140,8 +144,17 @@ def main():
     )
     # Run all simulations and get SimulationResultList
     sim_result_list = sim.run_all_simulations(sim_data)
-    # Output results as JSON to stdout
+    # If meter, convert all F16State data to meters
+    if args.unit == 'meter':
+        for sim_result in sim_result_list.results:
+            for fs in sim_result.final_state:
+                fs.vt *= 0.3048
+                fs.pn *= 0.3048
+                fs.pe *= 0.3048
+                fs.h *= 0.3048
+    # Output results as JSON to stdout (for Rust or other consumers)
     output = json.dumps(sim_result_list.to_dict())
+    print(output)
     with open('sim_results.json', 'w') as f:
         f.write(output)
 
