@@ -303,3 +303,42 @@ def get_script_path(script_filename):
     
     return os.path.dirname(os.path.realpath(script_filename))
 
+def convert_result_ft_to_meter(res, llc=None):
+    '''
+    Convert position and velocity in result dict from feet to meters.
+    Modifies and returns a new result dict with converted values.
+    - Position: pos_n, pos_e, alt (states)
+    - Velocity: vt (states), and optionally vn, ve, vd if present
+    '''
+    FT2M = 0.3048
+    res_m = res.copy()
+    states = res['states'].copy()
+    # Convert states: vt (0), pos_n (9), pos_e (10), alt (11)
+    states_m = states.copy()
+    states_m[:, 0] = states[:, 0] * FT2M  # vt
+    states_m[:, 9] = states[:, 9] * FT2M  # pos_n
+    states_m[:, 10] = states[:, 10] * FT2M  # pos_e
+    states_m[:, 11] = states[:, 11] * FT2M  # alt
+    res_m['states'] = states_m
+    # If extended states (xd_list) present, convert vt if available
+    if 'xd_list' in res:
+        res_m['xd_list'] = [np.array(xd) * FT2M if len(xd) > 0 else xd for xd in res['xd_list']]
+    # If you have velocity breakdowns (vn, ve, vd) in your result, convert them as well
+    for key in ['vn', 've', 'vd']:
+        if key in res:
+            res_m[key] = np.array(res[key]) * FT2M
+    return res_m
+
+def convert_init_meter_to_ft(lat_m, lon_m, alt_m):
+    '''Convert initial position from meters to feet.'''
+    M2FT = 3.28084
+    lat_ft = lat_m * M2FT
+    lon_ft = lon_m * M2FT
+    alt_ft = alt_m * M2FT
+    return lat_ft, lon_ft, alt_ft
+
+def convert_speed_meter_to_ft(speed_m):
+    '''Convert speed from meters/second to feet/second.'''
+    M2FT = 3.28084
+    return speed_m * M2FT
+

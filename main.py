@@ -6,8 +6,9 @@ import numpy as np
 from aerobench.lowlevel.low_level_controller import LowLevelController
 from aerobench.highlevel.autopilot import Autopilot
 from aerobench.run_f16_sim import run_f16_sim
-from aerobench.util import print_state
+from aerobench.util import convert_result_ft_to_meter, print_state
 import csv
+
 
 
 def main():
@@ -41,6 +42,7 @@ def main():
     ap = SimpleAutopilot(llc)
     tmax = 10.0  # seconds
     res = run_f16_sim(initial_state, tmax, ap, step=step)
+    res =convert_result_ft_to_meter(res)
     print("\nSimulation finished. Final state:")
     print_state(res['states'][-1])
 
