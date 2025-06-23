@@ -60,7 +60,7 @@ class Simulation:
         step = step if step is not None else sim_input.get('time_step', 1/30)
         for target in sim_input['targets']:
             ap = WaypointAutopilot([[wp['lat'], wp['lon'], wp['alt']] for wp in target['waypoints']], stdout=True)
-            print(f"Starting simulation for Aircraft {target['id']}")
+            # print(f"Starting simulation for Aircraft {target['id']}")
             # Build initial state from dict if needed
             init = [
                 target['init_state']['vt'],
